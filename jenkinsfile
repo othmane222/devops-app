@@ -9,6 +9,9 @@ pipeline {
         DOCKER_REGISTRY = 'https://index.docker.io/v1/' 
         DOCKER_IMAGE_NAME = 'othmanemaarad442/devops-app'
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+        SSH_CREDENTIALS_ID = 'services-vm-ssh-key'
+        SERVICES_VM_IP = '192.168.252.139' 
+        SERVICES_VM_USER = 'services'
     }
 
     stages {
@@ -57,9 +60,36 @@ pipeline {
         
         stage('5. Deploy to Production') {
             steps {
-                // Cette étape se connectera à la VM de services pour mettre à jour
-                // le conteneur. Nous la configurerons juste après.
-                echo "Déploiement à venir..."
+                script {
+                    // La nouvelle version de l'image que nous venons de pusher
+                    def newImageTag = "v${env.BUILD_NUMBER}"
+                    
+                    // On utilise le plugin SSH Agent avec nos credentials
+                    sshagent(credentials: [SSH_CREDENTIALS_ID]) {
+                        // Commande SSH pour se connecter à la VM et exécuter le déploiement
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${env.SERVICES_VM_USER}@${env.SERVICES_VM_IP} << 'EOF'
+                            
+                            echo "--- Connexion réussie à la VM de services ---"
+                            
+                            cd ~/app-stack
+
+                            echo "--- Mise à jour de l'image vers ${env.DOCKER_IMAGE_NAME}:${newImageTag} ---"
+                            
+                            sed -i 's|image: .*|image: ${env.DOCKER_IMAGE_NAME}:${newImageTag}|g' docker-compose.yml
+
+                            echo "--- Lancement de docker-compose avec la nouvelle image ---"
+                            
+                            docker-compose pull
+                            
+                            docker-compose up -d
+
+                            echo "--- Déploiement terminé ---"
+
+                            EOF
+                        """
+                    }
+                }
             }
         }
     }
