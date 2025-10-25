@@ -76,7 +76,7 @@ pipeline {
 
                             echo "--- Mise à jour de l'image vers ${env.DOCKER_IMAGE_NAME}:${newImageTag} ---"
                             
-                            sed -i 's|image: .*|image: ${env.DOCKER_IMAGE_NAME}:${newImageTag}|g' docker-compose.yml
+                            sed -i 's|image: .*|image: ${env.DOCKER_IMAGE_NAME}:${newImageTag}|g' docker-compose.yaml
 
                             echo "--- Lancement de docker-compose avec la nouvelle image ---"
                             
