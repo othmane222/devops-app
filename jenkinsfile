@@ -80,7 +80,7 @@ pipeline {
 
                             echo "--- Lancement de docker-compose avec la nouvelle image ---"
                             
-                            docker-compose pull
+                            docker-compose down
                             
                             docker-compose up -d
 
