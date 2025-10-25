@@ -65,38 +65,38 @@ pipeline {
 
                     sshagent(credentials: [SSH_CREDENTIALS_ID]) {
 
-                        // Test SSH connection
+                        // 1. Test SSH connection
                         sh """
                             ssh -o StrictHostKeyChecking=no ${env.SERVICES_VM_USER}@${env.SERVICES_VM_IP} \
                             "echo '--- Connexion réussie à la VM de services ---'"
                         """
 
-                        // Go to app directory
+                        // 2. Go to app directory (optional check)
                         sh """
                             ssh -o StrictHostKeyChecking=no ${env.SERVICES_VM_USER}@${env.SERVICES_VM_IP} \
-                            "cd ~/app-stack"
+                            "cd ~/app-stack || exit 1"
                         """
 
-                        // Update image tag
+                        // 3. Update image tag (FIXED)
                         sh """
                             ssh -o StrictHostKeyChecking=no ${env.SERVICES_VM_USER}@${env.SERVICES_VM_IP} \
-                            "echo '--- Mise à jour de l\\'image vers ${env.DOCKER_IMAGE_NAME}:${newImageTag} ---' && \
+                            "echo \"--- Mise à jour de l'image vers ${env.DOCKER_IMAGE_NAME}:${newImageTag} ---\" && \
                             sed -i 's|image: .*|image: ${env.DOCKER_IMAGE_NAME}:${newImageTag}|g' ~/app-stack/docker-compose.yaml"
                         """
 
-                        // Stop containers
+                        // 4. Stop containers
                         sh """
                             ssh -o StrictHostKeyChecking=no ${env.SERVICES_VM_USER}@${env.SERVICES_VM_IP} \
                             "cd ~/app-stack && echo '--- Arrêt des conteneurs ---' && docker-compose down"
                         """
 
-                        // Start containers
+                        // 5. Start containers
                         sh """
                             ssh -o StrictHostKeyChecking=no ${env.SERVICES_VM_USER}@${env.SERVICES_VM_IP} \
                             "cd ~/app-stack && echo '--- Démarrage des conteneurs avec la nouvelle image ---' && docker-compose up -d"
                         """
 
-                        // Finish message
+                        // 6. Finish message
                         sh """
                             ssh -o StrictHostKeyChecking=no ${env.SERVICES_VM_USER}@${env.SERVICES_VM_IP} \
                             "echo '--- Déploiement terminé ---'"
@@ -105,6 +105,7 @@ pipeline {
                 }
             }
         }
+
 
     }
 }
