@@ -71,12 +71,12 @@ pipeline {
                             "echo '--- Connexion réussie à la VM de services ---'"
                         '''
 
-                        // 2. Update image tag
-                        sh '''
-                            ssh -o StrictHostKeyChecking=no ${SERVICES_VM_USER}@${SERVICES_VM_IP} \
-                            "echo \\"--- Mise à jour de l'image vers ${DOCKER_IMAGE_NAME}:${newImageTag} ---\\" && \
-                            sed -i 's|image: .*|image: ${DOCKER_IMAGE_NAME}:${newImageTag}|g' ~/app-stack/docker-compose.yaml"
-                        '''
+                        // 2. Update image tag (needs variable expansion, so use triple double quotes)
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${env.SERVICES_VM_USER}@${env.SERVICES_VM_IP} \
+                            "echo '--- Mise à jour de l'image vers ${env.DOCKER_IMAGE_NAME}:${newImageTag} ---' && \
+                            sed -i 's|image: .*|image: ${env.DOCKER_IMAGE_NAME}:${newImageTag}|g' ~/app-stack/docker-compose.yaml"
+                        """
 
                         // 3. Stop containers
                         sh '''
