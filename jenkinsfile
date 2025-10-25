@@ -1,0 +1,66 @@
+pipeline {
+    agent any 
+
+    tools {
+        maven 'Default' 
+    }
+
+    environment {
+        DOCKER_REGISTRY = '' 
+        DOCKER_IMAGE_NAME = 'othmanemaarad442/devops-app'
+        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+    }
+
+    stages {
+        stage('1. Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('2. Build & Test') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        // Vous pouvez réactiver cette étape plus tard en ajoutant le plugin Dependency-Check
+        
+       // stage('3. Security Scan') {
+         //   steps {
+           //     dependencyCheck additionalArguments: '--scan ./ --format ALL', odcInstallation: 'Default'
+             //   dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            //}
+        //}
+        
+
+        stage('4. Build & Push Docker Image') {
+            steps {
+                script {
+                    // Utilise un tag unique pour l'image, basé sur le numéro de build
+                    def imageTag = "v${env.BUILD_NUMBER}"
+                    
+                    // Construit l'image Docker
+                    def dockerImage = docker.build("${env.DOCKER_IMAGE_NAME}:${imageTag}", '.')
+
+                    // Se connecte à Docker Hub en utilisant les credentials stockés
+                    docker.withRegistry(env.DOCKER_REGISTRY, env.DOCKER_CREDENTIALS_ID) {
+                        // Pousse l'image avec le tag du numéro de build
+                        dockerImage.push()
+
+                        // Pousse aussi l'image avec le tag 'latest'
+                        dockerImage.push('latest')
+                    }
+                }
+            }
+        }
+        
+        stage('5. Deploy to Production') {
+            steps {
+                // Cette étape se connectera à la VM de services pour mettre à jour
+                // le conteneur. Nous la configurerons juste après.
+                echo "Déploiement à venir..."
+            }
+        }
+    }
+}
