@@ -68,7 +68,7 @@ pipeline {
                     sshagent(credentials: [SSH_CREDENTIALS_ID]) {
                         // Commande SSH pour se connecter à la VM et exécuter le déploiement
                         sh """
-                            ssh -o StrictHostKeyChecking=no ${env.SERVICES_VM_USER}@${env.SERVICES_VM_IP} << 'EOF'
+                            ssh -o StrictHostKeyChecking=no ${env.SERVICES_VM_USER}@${env.SERVICES_VM_IP} <<- 'EOF'
                             
                             echo "--- Connexion réussie à la VM de services ---"
                             
