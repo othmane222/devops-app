@@ -28,8 +28,28 @@ pipeline {
             }
         }
 
+        stage('3. SonarQube Analysis (SAST)') {
+            steps {
+                // withSonarQubeEnv fait référence au nom du serveur configuré dans Jenkins
+                withSonarQubeEnv('SonarQube') {
+                    // L'option -Dsonar.login utilise le token stocké dans les credentials
+                    sh 'mvn clean verify sonar:sonar'
+                }
+            }
+        }
+
+        stage('4. Quality Gate') {
+            steps {
+                // Met le pipeline en pause en attendant le verdict de SonarQube
+                // Si la "Quality Gate" échoue dans SonarQube, le pipeline s'arrêtera ici.
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
         
-        stage('3. Security Scan (SCA)') {
+        stage('5. Security Scan (SCA)') {
             steps {
                 dependencyCheck additionalArguments: '--scan ./ --format ALL --failOnCVSS 7', odcInstallation: 'Default'
                 
@@ -38,7 +58,7 @@ pipeline {
         }
         
 
-        stage('4. Build & Push Docker Image') {
+        stage('6. Build & Push Docker Image') {
             steps {
                 script {
                     def imageTag = "v${env.BUILD_NUMBER}"
@@ -54,7 +74,7 @@ pipeline {
             }
         }
         
-        stage('5. Deploy to Production') {
+        stage('7. Deploy to Production') {
             steps {
                 script {
                     def newImageTag = "v${env.BUILD_NUMBER}"
