@@ -30,10 +30,9 @@ pipeline {
 
         stage('3. SonarQube Analysis (SAST)') {
             steps {
-                // withSonarQubeEnv fait référence au nom du serveur configuré dans Jenkins
                 withSonarQubeEnv('SonarQube') {
-                    // L'option -Dsonar.login utilise le token stocké dans les credentials
-                    sh 'mvn clean verify sonar:sonar'
+                    // On ajoute -Dsonar.login=$SONAR_AUTH_TOKEN pour passer le token
+                    sh 'mvn clean verify sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN'
                 }
             }
         }
