@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         maven 'maven' 
-        dependencyCheck 'Default'
+        dependency-check 'Default'
     }
 
     environment {
@@ -31,7 +31,7 @@ pipeline {
         
         stage('3. Security Scan (SCA)') {
             steps {
-                dependencyCheck additionalArguments: '--scan ./ --format ALL --failOnCVSS 7'
+                dependencyCheck additionalArguments: '--scan ./ --format ALL --failOnCVSS 7', odcInstallation: 'Default'
                 
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
