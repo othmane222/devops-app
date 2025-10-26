@@ -27,31 +27,26 @@ pipeline {
             }
         }
 
-        // Vous pouvez réactiver cette étape plus tard en ajoutant le plugin Dependency-Check
         
-       // stage('3. Security Scan') {
-         //   steps {
-           //     dependencyCheck additionalArguments: '--scan ./ --format ALL', odcInstallation: 'Default'
-             //   dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-            //}
-        //}
+        stage('3. Security Scan (SCA)') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --format ALL --failOnCVSS 7', odcInstallation: 'Default'
+                
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
         
 
         stage('4. Build & Push Docker Image') {
             steps {
                 script {
-                    // Utilise un tag unique pour l'image, basé sur le numéro de build
                     def imageTag = "v${env.BUILD_NUMBER}"
                     
-                    // Construit l'image Docker
                     def dockerImage = docker.build("${env.DOCKER_IMAGE_NAME}:${imageTag}", '.')
 
-                    // Se connecte à Docker Hub en utilisant les credentials stockés
                     docker.withRegistry(env.DOCKER_REGISTRY, env.DOCKER_CREDENTIALS_ID) {
-                        // Pousse l'image avec le tag du numéro de build
                         dockerImage.push()
 
-                        // Pousse aussi l'image avec le tag 'latest'
                         dockerImage.push('latest')
                     }
                 }
@@ -65,32 +60,27 @@ pipeline {
 
                     sshagent(credentials: [SSH_CREDENTIALS_ID]) {
 
-                        // 1. Test SSH connection
                         sh '''
                             ssh -o StrictHostKeyChecking=no ${SERVICES_VM_USER}@${SERVICES_VM_IP} \
                             "echo '--- Connexion réussie à la VM de services ---'"
                         '''
 
-                        // 2. Update image tag (needs variable expansion, so use triple double quotes)
                         sh """
                             ssh -o StrictHostKeyChecking=no ${env.SERVICES_VM_USER}@${env.SERVICES_VM_IP} \
                             "echo \\"--- Mise à jour de l'image vers ${env.DOCKER_IMAGE_NAME}:${newImageTag} ---\\" && \
                             sed -i 's|image: .*|image: ${env.DOCKER_IMAGE_NAME}:${newImageTag}|g' ~/app-stack/docker-compose.yaml"
                         """
 
-                        // 3. Stop containers
                         sh '''
                             ssh -o StrictHostKeyChecking=no ${SERVICES_VM_USER}@${SERVICES_VM_IP} \
                             "cd ~/app-stack && echo '--- Arrêt des conteneurs ---' && docker-compose down"
                         '''
 
-                        // 4. Start containers
                         sh '''
                             ssh -o StrictHostKeyChecking=no ${SERVICES_VM_USER}@${SERVICES_VM_IP} \
                             "cd ~/app-stack && echo '--- Démarrage des conteneurs avec la nouvelle image ---' && docker-compose up -d"
                         '''
 
-                        // 5. Finish message
                         sh '''
                             ssh -o StrictHostKeyChecking=no ${SERVICES_VM_USER}@${SERVICES_VM_IP} \
                             "echo '--- Déploiement terminé ---'"
