@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         maven 'maven' 
-        tool name: 'depcheck', type: 'dependency-check'
+        //tool name: 'depcheck', type: 'dependency-check'
     }
 
     environment {
