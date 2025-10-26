@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         maven 'maven' 
-        dependency-check 'Default'
+        dependencyCheck 'Default'
     }
 
     environment {
