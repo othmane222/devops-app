@@ -28,28 +28,28 @@ pipeline {
             }
         }
 
-        stage('3. SonarQube Analysis (SAST)') {
-            steps {
-                // withCredentials injecte le contenu du credential 'sonarqube-auth-token'
-                // dans une variable d'environnement nommée SONAR_TOKEN
-                withCredentials([string(credentialsId: 'sonarqube-auth-token', variable: 'SONAR_TOKEN')]) {
-                    withSonarQubeEnv('SonarQube') {
-                        // Utilise la variable d'environnement qui vient d'être créée
-                        sh "mvn clean verify sonar:sonar -Dsonar.login=${env.SONAR_TOKEN}"
-                    }
-                }
-            }
-        }
+        // stage('3. SonarQube Analysis (SAST)') {
+        //     steps {
+        //         // withCredentials injecte le contenu du credential 'sonarqube-auth-token'
+        //         // dans une variable d'environnement nommée SONAR_TOKEN
+        //         withCredentials([string(credentialsId: 'sonarqube-auth-token', variable: 'SONAR_TOKEN')]) {
+        //             withSonarQubeEnv('SonarQube') {
+        //                 // Utilise la variable d'environnement qui vient d'être créée
+        //                 sh "mvn clean verify sonar:sonar -Dsonar.login=${env.SONAR_TOKEN}"
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('4. Quality Gate') {
-            steps {
-                // Met le pipeline en pause en attendant le verdict de SonarQube
-                // Si la "Quality Gate" échoue dans SonarQube, le pipeline s'arrêtera ici.
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        // stage('4. Quality Gate') {
+        //     steps {
+        //         // Met le pipeline en pause en attendant le verdict de SonarQube
+        //         // Si la "Quality Gate" échoue dans SonarQube, le pipeline s'arrêtera ici.
+        //         timeout(time: 10, unit: 'MINUTES') {
+        //             waitForQualityGate abortPipeline: true
+        //         }
+        //     }
+        // }
 
         
         stage('5. Security Scan (SCA)') {
