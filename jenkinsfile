@@ -48,7 +48,11 @@ pipeline {
         }
 
         stage('4. Quality Gate') {
+            when {
+                branch 'main'
+            }
             steps {
+                
                 // Met le pipeline en pause en attendant le verdict de SonarCloud
                 // Si la "Quality Gate" échoue dans SonarCloud, le pipeline s'arrêtera ici.
                 timeout(time: 10, unit: 'MINUTES') {
