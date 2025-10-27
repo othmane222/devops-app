@@ -32,7 +32,7 @@ pipeline {
             steps {
                 // Injecte le contenu du credential 'sonarcloud-auth-token'
                 // dans une variable d'environnement nommée SONAR_TOKEN
-                withCredentials([string(credentialsId: 'sonarcloud-auth-token', variable: 'SONAR_TOKEN')]) {
+                withCredentials([string(credentialsId: 'sonarcloud', variable: 'SONAR_TOKEN')]) {
                     // Utilise la configuration du serveur SonarCloud nommée 'SonarCloud'
                     withSonarQubeEnv('SonarCloud') {
                         sh '''
