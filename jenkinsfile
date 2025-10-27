@@ -37,8 +37,8 @@ pipeline {
                     withSonarQubeEnv('SonarCloud') {
                         sh '''
                             mvn clean verify sonar:sonar \
-                              -Dsonar.projectKey=VOTRE_PROJECT_KEY_SONARCLOUD \
-                              -Dsonar.organization=VOTRE_ORGANISATION_SONARCLOUD \
+                              -Dsonar.projectKey=othmane222 \
+                              -Dsonar.organization=othmane222 \
                               -Dsonar.host.url=https://sonarcloud.io \
                               -Dsonar.login=${SONAR_TOKEN}
                         '''
