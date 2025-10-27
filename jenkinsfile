@@ -1,17 +1,17 @@
 pipeline {
-    agent any 
+    agent any
 
     tools {
-        maven 'maven' 
+        maven 'maven'
         // dependencyCheck 'Default'
     }
 
     environment {
-        DOCKER_REGISTRY = 'https://index.docker.io/v1/' 
+        DOCKER_REGISTRY = 'https://index.docker.io/v1/'
         DOCKER_IMAGE_NAME = 'othmanemaarad442/devops-app'
         DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
         SSH_CREDENTIALS_ID = 'services-vm-ssh-key'
-        SERVICES_VM_IP = '192.168.252.139' 
+        SERVICES_VM_IP = '192.168.252.139'
         SERVICES_VM_USER = 'services'
     }
 
@@ -28,44 +28,50 @@ pipeline {
             }
         }
 
-        // stage('3. SonarQube Analysis (SAST)') {
-        //     steps {
-        //         // withCredentials injecte le contenu du credential 'sonarqube-auth-token'
-        //         // dans une variable d'environnement nommée SONAR_TOKEN
-        //         withCredentials([string(credentialsId: 'sonarqube-auth-token', variable: 'SONAR_TOKEN')]) {
-        //             withSonarQubeEnv('SonarQube') {
-        //                 // Utilise la variable d'environnement qui vient d'être créée
-        //                 sh "mvn clean verify sonar:sonar -Dsonar.login=${env.SONAR_TOKEN}"
-        //             }
-        //         }
-        //     }
-        // }
+        stage('3. SonarCloud Analysis (SAST)') {
+            steps {
+                // Injecte le contenu du credential 'sonarcloud-auth-token'
+                // dans une variable d'environnement nommée SONAR_TOKEN
+                withCredentials([string(credentialsId: 'sonarcloud-auth-token', variable: 'SONAR_TOKEN')]) {
+                    // Utilise la configuration du serveur SonarCloud nommée 'SonarCloud'
+                    withSonarQubeEnv('SonarCloud') {
+                        sh '''
+                            mvn clean verify sonar:sonar \
+                              -Dsonar.projectKey=VOTRE_PROJECT_KEY_SONARCLOUD \
+                              -Dsonar.organization=VOTRE_ORGANISATION_SONARCLOUD \
+                              -Dsonar.host.url=https://sonarcloud.io \
+                              -Dsonar.login=${SONAR_TOKEN}
+                        '''
+                    }
+                }
+            }
+        }
 
-        // stage('4. Quality Gate') {
-        //     steps {
-        //         // Met le pipeline en pause en attendant le verdict de SonarQube
-        //         // Si la "Quality Gate" échoue dans SonarQube, le pipeline s'arrêtera ici.
-        //         timeout(time: 10, unit: 'MINUTES') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
+        stage('4. Quality Gate') {
+            steps {
+                // Met le pipeline en pause en attendant le verdict de SonarCloud
+                // Si la "Quality Gate" échoue dans SonarCloud, le pipeline s'arrêtera ici.
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
 
-        
+
         stage('5. Security Scan (SCA)') {
             steps {
                 dependencyCheck additionalArguments: '--scan ./ --format ALL --failOnCVSS 7', odcInstallation: 'Default'
-                
+
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
-        
+
 
         stage('6. Build & Push Docker Image') {
             steps {
                 script {
                     def imageTag = "v${env.BUILD_NUMBER}"
-                    
+
                     def dockerImage = docker.build("${env.DOCKER_IMAGE_NAME}:${imageTag}", '.')
 
                     docker.withRegistry(env.DOCKER_REGISTRY, env.DOCKER_CREDENTIALS_ID) {
@@ -76,7 +82,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('7. Deploy to Production') {
             steps {
                 script {
@@ -113,7 +119,5 @@ pipeline {
                 }
             }
         }
-
-
     }
 }
